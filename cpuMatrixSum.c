@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    /* 行列積を計算 */
+    /* 行列和を計算 */
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             matrixC[i * SIZE + j] 
