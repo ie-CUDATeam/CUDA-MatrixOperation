@@ -6,7 +6,7 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define SIZE       16
+#define SIZE       32
 #define BLOCK_SIZE  1
 
 void showMatrix(int *matrix);
@@ -15,6 +15,13 @@ __global__ void matrixMultiple(int *matrixA, int *matrixB, int *matrixC);
 
 int main(int argc, char* argv[])
 {
+    // 時間計測開始
+    cudaEvent_t  start, stop;
+    cudaEventCreate( &start );
+    cudaEventCreate( &stop );
+    cudaEventRecord( start, 0 );
+
+
     const size_t matrixSize = sizeof(int) * SIZE * SIZE;
 
     // ホスト側のメモリ領域確保
@@ -54,12 +61,25 @@ int main(int argc, char* argv[])
 
 
     // 結果表示
-    puts("matrixA =");
-    showMatrix( hostA );
-    puts("matrixB =");
-    showMatrix( hostB );
-    puts("matrixC =");
-    showMatrix( hostC );
+    // puts("matrixA =");
+    // showMatrix( hostA );
+    // puts("matrixB =");
+    // showMatrix( hostB );
+    // puts("matrixC =");
+    // showMatrix( hostC );
+
+
+    // 時間計測終了
+    cudaEventRecord( stop, 0 );
+    cudaEventSynchronize( stop );
+
+    // 計測結果表示
+    float elapsedTime;
+    cudaEventElapsedTime( &elapsedTime, start, stop );
+    printf("elapsed time: %f ms\n", elapsedTime);
+
+    cudaEventDestroy( start );
+    cudaEventDestroy( stop );
 
 
     // デバイス側のメモリ領域解放
