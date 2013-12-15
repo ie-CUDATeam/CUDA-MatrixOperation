@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, devId);
     cout << "multiProcessorCount = " << prop.multiProcessorCount << endl;
+    cout << "deviceOverlap = " << prop.deviceOverlap << endl;
 
     return 0;
 }
