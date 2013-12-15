@@ -52,8 +52,8 @@ int main(int argc, char* argv[])
 
 
     // グリッド & ブロックサイズの設定
-    dim3 grid(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 block(SIZE/BLOCK_SIZE, SIZE/BLOCK_SIZE);
+    dim3 grid(SIZE/BLOCK_SIZE, SIZE/BLOCK_SIZE);
+    dim3 block(BLOCK_SIZE, BLOCK_SIZE);
     // 行列和を計算
     matrixSum<<< grid, block >>>( deviceA, deviceB, deviceC );
     // データ転送: device -> host
