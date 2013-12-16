@@ -110,9 +110,25 @@ void showMatrix(int *matrix)
 __global__ 
 void matrixSum(int *matrixA, int *matrixB, int *matrixC)
 {
-    unsigned int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-    unsigned int y = (blockIdx.y * blockDim.y) + threadIdx.y;
+    unsigned int   x = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int   y = (blockIdx.y * blockDim.y) + threadIdx.y;
+    unsigned int idx = (y * SIZE) + x;
 
-    matrixC[(y * SIZE) + x] 
-        = matrixA[(y * SIZE) + x] + matrixB[(y * SIZE) + x];
+#ifdef _USE_SHARED_MEM
+    // SharedMemory を使う場合:
+    unsigned int tx = threadIdx.x;
+    unsigned int ty = threadIdx.y;
+
+    __shared__ int sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ int sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
+
+    sharedMatA[ty][tx] = matrixA[idx];
+    sharedMatB[ty][tx] = matrixB[idx];
+    __syncthreads();
+
+    matrixC[idx] = sharedMatA[ty][tx] + sharedMatB[ty][tx];
+#else
+    // SharedMemory を使わない場合:
+    matrixC[idx] = matrixA[idx] + matrixB[idx];
+#endif
 }

@@ -110,13 +110,40 @@ void showMatrix(int *matrix)
 __global__ 
 void matrixMultiple(int *matrixA, int *matrixB, int *matrixC)
 {
-    unsigned int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-    unsigned int y = (blockIdx.y * blockDim.y) + threadIdx.y;
+    unsigned int   x = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int   y = (blockIdx.y * blockDim.y) + threadIdx.y;
+    unsigned int idx = (y * SIZE) + x;
 
     int value = 0;
+
+#ifdef _USE_SHARED_MEM
+    // SharedMemory を使う場合:
+    unsigned int tx = threadIdx.x,  bx = blockIdx.x;
+    unsigned int ty = threadIdx.y,  by = blockIdx.y;
+
+    __shared__ int sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ int sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
+
+    for (int i = 0; i < SIZE/BLOCK_SIZE; i++) {
+
+        unsigned int px = (SIZE * BLOCK_SIZE * by) + (i * BLOCK_SIZE);
+        unsigned int py = (BLOCK_SIZE * bx) + SIZE * (i * BLOCK_SIZE);
+
+        sharedMatA[ty][tx] = matrixA[px + (SIZE * ty + tx)];
+        sharedMatB[ty][tx] = matrixB[py + (SIZE * ty + tx)];
+        __syncthreads();
+
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            value += (sharedMatA[ty][j] * sharedMatB[j][tx]);
+        }
+        __syncthreads();
+    }
+#else
+    // SharedMemory を使わない場合:
     for (int i = 0; i < SIZE; i++) {
         value += matrixA[(y * SIZE) + i] * matrixB[(i * SIZE) + x];
         __syncthreads();
     }
-    matrixC[(y * SIZE) + x] = value;
+#endif
+    matrixC[idx] = value;
 }
