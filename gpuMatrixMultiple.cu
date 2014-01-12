@@ -123,22 +123,22 @@ void matrixMultiple(int *matrixA, int *matrixB, int *matrixC)
 
 #ifdef _USE_SHARED_MEM
     // SharedMemory を使う場合:
-    unsigned int tx = threadIdx.x,  bx = blockIdx.x;
-    unsigned int ty = threadIdx.y,  by = blockIdx.y;
+    unsigned int  tx = threadIdx.x,  bx = blockIdx.x;
+    unsigned int  ty = threadIdx.y,  by = blockIdx.y;
 
-    __shared__ int sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
-    __shared__ int sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ int sharedMatA[BLOCK_DIM_Y][BLOCK_DIM_X];
+    __shared__ int sharedMatB[BLOCK_DIM_Y][BLOCK_DIM_X];
 
-    for (int i = 0; i < SIZE/BLOCK_SIZE; i++) {
+    for (int i = 0; i < (SIZE/BLOCK_DIM_X); i++) {
 
-        unsigned int px = (SIZE * BLOCK_SIZE * by) + (i * BLOCK_SIZE);
-        unsigned int py = (BLOCK_SIZE * bx) + SIZE * (i * BLOCK_SIZE);
+        unsigned int px = (SIZE * BLOCK_DIM_X * by) + (i * BLOCK_DIM_X);
+        unsigned int py = (BLOCK_DIM_Y * bx) + SIZE * (i * BLOCK_DIM_Y);
 
         sharedMatA[ty][tx] = matrixA[px + (SIZE * ty + tx)];
         sharedMatB[ty][tx] = matrixB[py + (SIZE * ty + tx)];
         __syncthreads();
 
-        for (int j = 0; j < BLOCK_SIZE; j++) {
+        for (int j = 0; j < BLOCK_DIM_X; j++) {
             value += (sharedMatA[ty][j] * sharedMatB[j][tx]);
         }
         __syncthreads();
