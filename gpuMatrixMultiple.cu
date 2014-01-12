@@ -6,8 +6,13 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define SIZE        2
-#define BLOCK_SIZE  1
+#define SIZE        (32)
+#define BLOCK_DIM_X (32)
+#define BLOCK_DIM_Y (32)
+#define BLOCK_SIZE  (BLOCK_DIM_X * BLOCK_DIM_Y)
+#define GRID_DIM_X  (SIZE / BLOCK_DIM_X)
+#define GRID_DIM_Y  (SIZE / BLOCK_DIM_Y)
+#define GRID_SIZE   (GRID_DIM_X * GRID_DIM_Y)
 
 void showMatrix(int *matrix);
 __global__ void matrixMultiple(int *matrixA, int *matrixB, int *matrixC);
@@ -45,8 +50,8 @@ int main(int argc, char* argv[])
 
 
     // グリッド & ブロックサイズの設定
-    dim3 grid(SIZE/BLOCK_SIZE, SIZE/BLOCK_SIZE);
-    dim3 block(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 grid(GRID_DIM_X, GRID_DIM_Y);    printf("grid(%d, %d)\n", GRID_DIM_X, GRID_DIM_Y);
+    dim3 block(BLOCK_DIM_X, BLOCK_DIM_Y); printf("block(%d, %d)\n", BLOCK_DIM_X, BLOCK_DIM_Y);
 
     // 時間計測開始
     cudaEvent_t  start, stop;
@@ -66,12 +71,12 @@ int main(int argc, char* argv[])
     cudaMemcpy( hostC, deviceC, matrixMemSize, cudaMemcpyDeviceToHost );
 
     // 結果表示
-    // puts("matrixA =");
-    // showMatrix( hostA );
-    // puts("matrixB =");
-    // showMatrix( hostB );
-    // puts("matrixC =");
-    // showMatrix( hostC );
+    puts("matrixA =");
+    showMatrix( hostA );
+    puts("matrixB =");
+    showMatrix( hostB );
+    puts("matrixC =");
+    showMatrix( hostC );
 
     // 計測結果表示
     float elapsedTime;
@@ -110,9 +115,9 @@ void showMatrix(int *matrix)
 __global__ 
 void matrixMultiple(int *matrixA, int *matrixB, int *matrixC)
 {
-    unsigned int   x = (blockIdx.x * blockDim.x) + threadIdx.x;
-    unsigned int   y = (blockIdx.y * blockDim.y) + threadIdx.y;
-    unsigned int idx = (y * SIZE) + x;
+    unsigned int  jx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int  jy = (blockIdx.y * blockDim.y) + threadIdx.y;
+    unsigned int tid = (jy * SIZE) + jx;
 
     int value = 0;
 
@@ -141,9 +146,9 @@ void matrixMultiple(int *matrixA, int *matrixB, int *matrixC)
 #else
     // SharedMemory を使わない場合:
     for (int i = 0; i < SIZE; i++) {
-        value += matrixA[(y * SIZE) + i] * matrixB[(i * SIZE) + x];
+        value += matrixA[(jy * SIZE) + i] * matrixB[(i * SIZE) + jx];
         __syncthreads();
     }
 #endif
-    matrixC[idx] = value;
+    matrixC[tid] = value;
 }
