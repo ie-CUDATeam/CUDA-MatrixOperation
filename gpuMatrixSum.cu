@@ -15,40 +15,33 @@ __global__ void matrixSum(int *matrixA, int *matrixB, int *matrixC);
 
 int main(int argc, char* argv[])
 {
-    // 時間計測開始
-    cudaEvent_t  start, stop;
-    cudaEventCreate( &start );
-    cudaEventCreate( &stop );
-    cudaEventRecord( start, 0 );
-
-
-    const size_t matrixSize = sizeof(int) * SIZE * SIZE;
+    const size_t matrixMemSize = sizeof(int) * SIZE * SIZE;
 
     // ホスト側のメモリ領域確保
     int *hostA, *hostB, *hostC;
-    hostA = (int *) malloc( matrixSize );
-    hostB = (int *) malloc( matrixSize );
-    hostC = (int *) malloc( matrixSize );
+    hostA = (int *) malloc( matrixMemSize );
+    hostB = (int *) malloc( matrixMemSize );
+    hostC = (int *) malloc( matrixMemSize );
 
     // 乱数系列の初期化
     srandom( (unsigned) time(NULL) );
     // 初期化処理
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            hostA[i * SIZE + j] = random() % 50;
-            hostB[i * SIZE + j] = random() % 50;
-            hostC[i * SIZE + j] = 0;
+    for (int y = 0; y < SIZE; y++) {
+        for (int x = 0; x < SIZE; x++) {
+            hostA[y * SIZE + x] = random() % 50;
+            hostB[y * SIZE + x] = random() % 50;
+            hostC[y * SIZE + x] = 0;
         }
     }
 
     // デバイス側のメモリ領域確保 & データ転送
     int *deviceA, *deviceB, *deviceC;
-    cudaMalloc( (void **)&deviceA, matrixSize );
-    cudaMalloc( (void **)&deviceB, matrixSize );
-    cudaMalloc( (void **)&deviceC, matrixSize );
-    cudaMemcpy( deviceA, hostA, matrixSize, cudaMemcpyHostToDevice );
-    cudaMemcpy( deviceB, hostB, matrixSize, cudaMemcpyHostToDevice );
-    cudaMemcpy( deviceC, hostC, matrixSize, cudaMemcpyHostToDevice );
+    cudaMalloc( (void **)&deviceA, matrixMemSize );
+    cudaMalloc( (void **)&deviceB, matrixMemSize );
+    cudaMalloc( (void **)&deviceC, matrixMemSize );
+    cudaMemcpy( deviceA, hostA, matrixMemSize, cudaMemcpyHostToDevice );
+    cudaMemcpy( deviceB, hostB, matrixMemSize, cudaMemcpyHostToDevice );
+    cudaMemcpy( deviceC, hostC, matrixMemSize, cudaMemcpyHostToDevice );
 
 
     // グリッド & ブロックサイズの設定
