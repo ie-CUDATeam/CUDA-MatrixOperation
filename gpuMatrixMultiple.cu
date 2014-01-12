@@ -15,13 +15,6 @@ __global__ void matrixMultiple(int *matrixA, int *matrixB, int *matrixC);
 
 int main(int argc, char* argv[])
 {
-    // 時間計測開始
-    cudaEvent_t  start, stop;
-    cudaEventCreate( &start );
-    cudaEventCreate( &stop );
-    cudaEventRecord( start, 0 );
-
-
     const size_t matrixMemSize = sizeof(int) * SIZE * SIZE;
 
     // ホスト側のメモリ領域確保
@@ -54,24 +47,31 @@ int main(int argc, char* argv[])
     // グリッド & ブロックサイズの設定
     dim3 grid(SIZE/BLOCK_SIZE, SIZE/BLOCK_SIZE);
     dim3 block(BLOCK_SIZE, BLOCK_SIZE);
+
+    // 時間計測開始
+    cudaEvent_t  start, stop;
+    cudaEventCreate( &start );
+    cudaEventCreate( &stop );
+    cudaEventRecord( start, 0 );
+
     // 行列積を計算
     matrixMultiple<<< grid, block >>>( deviceA, deviceB, deviceC );
-    // データ転送: device -> host
-    cudaMemcpy( hostC, deviceC, matrixMemSize, cudaMemcpyDeviceToHost );
-
-
-    // 結果表示
-    puts("matrixA =");
-    showMatrix( hostA );
-    puts("matrixB =");
-    showMatrix( hostB );
-    puts("matrixC =");
-    showMatrix( hostC );
-
+    cudaThreadSynchronize();
 
     // 時間計測終了
     cudaEventRecord( stop, 0 );
     cudaEventSynchronize( stop );
+
+    // データ転送: device -> host
+    cudaMemcpy( hostC, deviceC, matrixMemSize, cudaMemcpyDeviceToHost );
+
+    // 結果表示
+    // puts("matrixA =");
+    // showMatrix( hostA );
+    // puts("matrixB =");
+    // showMatrix( hostB );
+    // puts("matrixC =");
+    // showMatrix( hostC );
 
     // 計測結果表示
     float elapsedTime;
