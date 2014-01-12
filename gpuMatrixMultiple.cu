@@ -6,7 +6,7 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define SIZE       32
+#define SIZE        2
 #define BLOCK_SIZE  1
 
 void showMatrix(int *matrix);
@@ -22,33 +22,33 @@ int main(int argc, char* argv[])
     cudaEventRecord( start, 0 );
 
 
-    const size_t matrixSize = sizeof(int) * SIZE * SIZE;
+    const size_t matrixMemSize = sizeof(int) * SIZE * SIZE;
 
     // ホスト側のメモリ領域確保
     int *hostA, *hostB, *hostC;
-    hostA = (int *) malloc( matrixSize );
-    hostB = (int *) malloc( matrixSize );
-    hostC = (int *) malloc( matrixSize );
+    hostA = (int *) malloc( matrixMemSize );
+    hostB = (int *) malloc( matrixMemSize );
+    hostC = (int *) malloc( matrixMemSize );
 
     // 乱数系列の初期化
     srandom( (unsigned) time(NULL) );
     // 初期化処理
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            hostA[i * SIZE + j] = random() % 50;
-            hostB[i * SIZE + j] = random() % 50;
-            hostC[i * SIZE + j] = 0;
+    for (int y = 0; y < SIZE; y++) {
+        for (int x = 0; x < SIZE; x++) {
+            hostA[y * SIZE + x] = random() % 50;
+            hostB[y * SIZE + x] = random() % 50;
+            hostC[y * SIZE + x] = 0;
         }
     }
 
     // デバイス側のメモリ領域確保 & データ転送
     int *deviceA, *deviceB, *deviceC;
-    cudaMalloc( (void **)&deviceA, matrixSize );
-    cudaMalloc( (void **)&deviceB, matrixSize );
-    cudaMalloc( (void **)&deviceC, matrixSize );
-    cudaMemcpy( deviceA, hostA, matrixSize, cudaMemcpyHostToDevice );
-    cudaMemcpy( deviceB, hostB, matrixSize, cudaMemcpyHostToDevice );
-    cudaMemcpy( deviceC, hostC, matrixSize, cudaMemcpyHostToDevice );
+    cudaMalloc( (void **)&deviceA, matrixMemSize );
+    cudaMalloc( (void **)&deviceB, matrixMemSize );
+    cudaMalloc( (void **)&deviceC, matrixMemSize );
+    cudaMemcpy( deviceA, hostA, matrixMemSize, cudaMemcpyHostToDevice );
+    cudaMemcpy( deviceB, hostB, matrixMemSize, cudaMemcpyHostToDevice );
+    cudaMemcpy( deviceC, hostC, matrixMemSize, cudaMemcpyHostToDevice );
 
 
     // グリッド & ブロックサイズの設定
@@ -57,16 +57,16 @@ int main(int argc, char* argv[])
     // 行列積を計算
     matrixMultiple<<< grid, block >>>( deviceA, deviceB, deviceC );
     // データ転送: device -> host
-    cudaMemcpy( hostC, deviceC, matrixSize, cudaMemcpyDeviceToHost );
+    cudaMemcpy( hostC, deviceC, matrixMemSize, cudaMemcpyDeviceToHost );
 
 
     // 結果表示
-    // puts("matrixA =");
-    // showMatrix( hostA );
-    // puts("matrixB =");
-    // showMatrix( hostB );
-    // puts("matrixC =");
-    // showMatrix( hostC );
+    puts("matrixA =");
+    showMatrix( hostA );
+    puts("matrixB =");
+    showMatrix( hostB );
+    puts("matrixC =");
+    showMatrix( hostC );
 
 
     // 時間計測終了
@@ -98,9 +98,9 @@ int main(int argc, char* argv[])
 
 void showMatrix(int *matrix)
 {
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            printf("%5d ", matrix[i * SIZE + j]);
+    for (int y = 0; y < SIZE; y++) {
+        for (int x = 0; x < SIZE; x++) {
+            printf("%5d ", matrix[y * SIZE + x]);
         }
         puts("");
     }
