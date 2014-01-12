@@ -6,8 +6,13 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define SIZE       32
-#define BLOCK_SIZE  1
+#define SIZE        (4096)
+#define BLOCK_DIM_X (64)
+#define BLOCK_DIM_Y (16)
+#define BLOCK_SIZE  (BLOCK_DIM_X * BLOCK_DIM_Y)
+#define GRID_DIM_X  (SIZE / BLOCK_DIM_X)
+#define GRID_DIM_Y  (SIZE / BLOCK_DIM_Y)
+#define GRID_SIZE   (GRID_DIM_X * GRID_DIM_Y)
 
 void showMatrix(int *matrix);
 __global__ void matrixSum(int *matrixA, int *matrixB, int *matrixC);
@@ -45,13 +50,25 @@ int main(int argc, char* argv[])
 
 
     // グリッド & ブロックサイズの設定
-    dim3 grid(SIZE/BLOCK_SIZE, SIZE/BLOCK_SIZE);
-    dim3 block(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 grid(GRID_DIM_X, GRID_DIM_Y);
+    dim3 block(BLOCK_DIM_X, BLOCK_DIM_Y);
+
+    // 時間計測開始
+    cudaEvent_t  start, stop;
+    cudaEventCreate( &start );
+    cudaEventCreate( &stop );
+    cudaEventRecord( start, 0 );
+
     // 行列和を計算
     matrixSum<<< grid, block >>>( deviceA, deviceB, deviceC );
-    // データ転送: device -> host
-    cudaMemcpy( hostC, deviceC, matrixSize, cudaMemcpyDeviceToHost );
+    cudaThreadSynchronize();
 
+    // 時間計測終了
+    cudaEventRecord( stop, 0 );
+    cudaEventSynchronize( stop );
+
+    // データ転送: device -> host
+    cudaMemcpy( hostC, deviceC, matrixMemSize, cudaMemcpyDeviceToHost );
 
     // 結果表示
     // puts("matrixA =");
@@ -61,10 +78,6 @@ int main(int argc, char* argv[])
     // puts("matrixC =");
     // showMatrix( hostC );
 
-
-    // 時間計測終了
-    cudaEventRecord( stop, 0 );
-    cudaEventSynchronize( stop );
 
     // 計測結果表示
     float elapsedTime;
@@ -103,25 +116,25 @@ void showMatrix(int *matrix)
 __global__ 
 void matrixSum(int *matrixA, int *matrixB, int *matrixC)
 {
-    unsigned int   x = (blockIdx.x * blockDim.x) + threadIdx.x;
-    unsigned int   y = (blockIdx.y * blockDim.y) + threadIdx.y;
-    unsigned int idx = (y * SIZE) + x;
+    unsigned int  jx = (blockIdx.x * blockDim.x) + threadIdx.x;
+    unsigned int  jy = (blockIdx.y * blockDim.y) + threadIdx.y;
+    unsigned int tid = (jy * SIZE) + jx;
 
 #ifdef _USE_SHARED_MEM
     // SharedMemory を使う場合:
-    unsigned int tx = threadIdx.x;
-    unsigned int ty = threadIdx.y;
+    unsigned int  tx = threadIdx.x;
+    unsigned int  ty = threadIdx.y;
 
-    __shared__ int sharedMatA[BLOCK_SIZE][BLOCK_SIZE];
-    __shared__ int sharedMatB[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ int sharedMatA[BLOCK_DIM_Y][BLOCK_DIM_X];
+    __shared__ int sharedMatB[BLOCK_DIM_Y][BLOCK_DIM_X];
 
-    sharedMatA[ty][tx] = matrixA[idx];
-    sharedMatB[ty][tx] = matrixB[idx];
+    sharedMatA[ty][tx] = matrixA[tid];
+    sharedMatB[ty][tx] = matrixB[tid];
     __syncthreads();
 
-    matrixC[idx] = sharedMatA[ty][tx] + sharedMatB[ty][tx];
+    matrixC[tid] = sharedMatA[ty][tx] + sharedMatB[ty][tx];
 #else
     // SharedMemory を使わない場合:
-    matrixC[idx] = matrixA[idx] + matrixB[idx];
+    matrixC[tid] = matrixA[tid] + matrixB[tid];
 #endif
 }
