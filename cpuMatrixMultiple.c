@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 
-#define SIZE 16
+#define SIZE 2048
 
 void showMatrix(int *matrix);
+double gettimeofday_msec();
 
 
 int main(int argc, char* argv[])
@@ -28,6 +30,10 @@ int main(int argc, char* argv[])
         }
     }
 
+    /* 時間計測開始 */
+    double start, end;
+    start = gettimeofday_msec();
+
     /* 行列積を計算 */
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -38,13 +44,18 @@ int main(int argc, char* argv[])
         }
     }
 
+    /* 時間計測終了 */
+    end = gettimeofday_msec();
+    /* 計測結果表示 */
+    printf("elapsed time: %f sec\n", end - start);
+
     /* 結果表示 */
-    puts("matrixA =");
-    showMatrix( matrixA );
-    puts("matrixB =");
-    showMatrix( matrixB );
-    puts("matrixC =");
-    showMatrix( matrixC );
+    /* puts("matrixA ="); */
+    /* showMatrix( matrixA ); */
+    /* puts("matrixB ="); */
+    /* showMatrix( matrixB ); */
+    /* puts("matrixC ="); */
+    /* showMatrix( matrixC ); */
 
 
     /* メモリ領域解放 */
@@ -64,4 +75,13 @@ void showMatrix(int *matrix)
         }
         puts("");
     }
+}
+
+
+double gettimeofday_msec()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    return tv.tv_sec + (double)tv.tv_usec * 1e-6;
 }
