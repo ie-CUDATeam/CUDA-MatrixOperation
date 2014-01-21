@@ -6,13 +6,7 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define SIZE        (32)
-#define BLOCK_DIM_X (32)
-#define BLOCK_DIM_Y (32)
-#define BLOCK_SIZE  (BLOCK_DIM_X * BLOCK_DIM_Y)
-#define GRID_DIM_X  (SIZE / BLOCK_DIM_X)
-#define GRID_DIM_Y  (SIZE / BLOCK_DIM_Y)
-#define GRID_SIZE   (GRID_DIM_X * GRID_DIM_Y)
+#include "param.h"
 
 void showMatrix(int *matrix);
 __global__ void matrixMultiple(int *matrixA, int *matrixB, int *matrixC);
@@ -70,14 +64,6 @@ int main(int argc, char* argv[])
     // データ転送: device -> host
     cudaMemcpy( hostC, deviceC, matrixMemSize, cudaMemcpyDeviceToHost );
 
-    // 結果表示
-    puts("matrixA =");
-    showMatrix( hostA );
-    puts("matrixB =");
-    showMatrix( hostB );
-    puts("matrixC =");
-    showMatrix( hostC );
-
     // 計測結果表示
     float elapsedTime;
     cudaEventElapsedTime( &elapsedTime, start, stop );
@@ -85,6 +71,19 @@ int main(int argc, char* argv[])
 
     cudaEventDestroy( start );
     cudaEventDestroy( stop );
+
+
+    // 結果表示
+    // puts("matrixA =");
+    // showMatrix( hostA );
+    // puts("matrixB =");
+    // showMatrix( hostB );
+    // puts("matrixC =");
+    // showMatrix( hostC );
+    for (int i = (SIZE*SIZE)-3; i < (SIZE*SIZE); i++) {
+        printf("hostC[%d] = %d, ", i, hostC[i]);
+    }
+    printf("\n");
 
 
     // デバイス側のメモリ領域解放

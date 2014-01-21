@@ -47,7 +47,8 @@ int main(int argc, char* argv[])
     /* 時間計測終了 */
     end = gettimeofday_msec();
     /* 計測結果表示 */
-    printf("elapsed time: %f sec\n", end - start);
+    printf("elapsed time: %f ms\n", end - start);
+
 
     /* 結果表示 */
     /* puts("matrixA ="); */
@@ -83,5 +84,5 @@ double gettimeofday_msec()
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
-    return tv.tv_sec + (double)tv.tv_usec * 1e-6;
+    return (tv.tv_sec * 1e+3) + (tv.tv_usec * 1e-3);
 }
